@@ -14,11 +14,11 @@ import sys
 from pathlib import Path
 
 try:
-    import google.generativeai as genai
+    from google import genai
     from PIL import Image
 except ImportError:
     print("Error: required packages not installed.")
-    print("Run: pip install google-generativeai Pillow")
+    print("Run: pip install google-genai Pillow")
     sys.exit(1)
 
 try:
@@ -71,7 +71,7 @@ REGLAS IMPORTANTES:
 """
 
 
-def extract_from_folder(model: genai.GenerativeModel, folder_path: Path) -> dict | None:
+def extract_from_folder(client: genai.Client, folder_path: Path) -> dict | None:
     png_files = sorted(folder_path.glob("*.png"))
     if not png_files:
         print(f"  No PNG files found — skipping.")
@@ -83,7 +83,10 @@ def extract_from_folder(model: genai.GenerativeModel, folder_path: Path) -> dict
     content = [Image.open(p) for p in png_files]
     content.append(EXTRACTION_PROMPT)
 
-    response = model.generate_content(content)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=content,
+    )
     raw_text = response.text.strip()
 
     # Strip markdown code fences if Gemini wraps the JSON
@@ -134,8 +137,7 @@ def main():
         print("Make sure you run this script from the project root directory.")
         sys.exit(1)
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    client = genai.Client(api_key=api_key)
 
     doc_folders = sorted([f for f in DOCS_FOLDER.iterdir() if f.is_dir()])
     print(f"Honduras Mines Coordinate Extractor")
@@ -147,7 +149,7 @@ def main():
     for folder in doc_folders:
         print(f"[{folder.name}]")
         try:
-            data = extract_from_folder(model, folder)
+            data = extract_from_folder(client, folder)
             if data is None:
                 continue
             data["document_name"] = folder.name

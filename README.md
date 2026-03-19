@@ -28,7 +28,7 @@ During installation on Windows, check **"Add Python to PATH"**.
 Open a terminal (Command Prompt or PowerShell on Windows, Terminal on Mac/Linux) and run:
 
 ```
-pip install google-generativeai Pillow folium pyproj
+pip install google-genai Pillow folium pyproj
 ```
 
 ### 3. Get a free Google Gemini API key
@@ -122,7 +122,7 @@ Honduras-Mines-HR-Project/
 
 | Problem | Fix |
 |---|---|
-| `ModuleNotFoundError` | Run `pip install google-generativeai Pillow folium pyproj` |
+| `ModuleNotFoundError` | Run `pip install google-genai Pillow folium pyproj` |
 | `GOOGLE_API_KEY not set` | Follow step 4 above |
 | `Folder not found` | Run the scripts from the project root directory |
 | A document shows 0 points | Check the terminal output — the note field may explain why |
