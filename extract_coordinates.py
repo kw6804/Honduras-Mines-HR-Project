@@ -2,7 +2,7 @@
 extract_coordinates.py
 ----------------------
 Reads scanned document images from "HONDURAS MINING COORDINATES" and uses
-Claude Vision to extract mine coordinate data. Outputs mines_data.json.
+Google Gemini Vision (free tier) to extract mine coordinate data. Outputs mines_data.json.
 
 Usage:
     python extract_coordinates.py
@@ -10,14 +10,15 @@ Usage:
 
 import os
 import json
-import base64
 import sys
 from pathlib import Path
 
 try:
-    import anthropic
+    import google.generativeai as genai
+    from PIL import Image
 except ImportError:
-    print("Error: 'anthropic' package not installed. Run: pip install anthropic")
+    print("Error: required packages not installed.")
+    print("Run: pip install google-generativeai Pillow")
     sys.exit(1)
 
 try:
@@ -70,40 +71,22 @@ REGLAS IMPORTANTES:
 """
 
 
-def encode_image(image_path: Path) -> str:
-    with open(image_path, "rb") as f:
-        return base64.standard_b64encode(f.read()).decode("utf-8")
-
-
-def extract_from_folder(client: anthropic.Anthropic, folder_path: Path) -> dict | None:
+def extract_from_folder(model: genai.GenerativeModel, folder_path: Path) -> dict | None:
     png_files = sorted(folder_path.glob("*.png"))
     if not png_files:
         print(f"  No PNG files found — skipping.")
         return None
 
-    print(f"  Sending {len(png_files)} image(s) to Claude...")
+    print(f"  Sending {len(png_files)} image(s) to Gemini...")
 
-    content = []
-    for png_path in png_files:
-        content.append({
-            "type": "image",
-            "source": {
-                "type": "base64",
-                "media_type": "image/png",
-                "data": encode_image(png_path),
-            },
-        })
-    content.append({"type": "text", "text": EXTRACTION_PROMPT})
+    # Build content list: all images first, then the prompt
+    content = [Image.open(p) for p in png_files]
+    content.append(EXTRACTION_PROMPT)
 
-    response = client.messages.create(
-        model="claude-opus-4-6",
-        max_tokens=4096,
-        messages=[{"role": "user", "content": content}],
-    )
+    response = model.generate_content(content)
+    raw_text = response.text.strip()
 
-    raw_text = response.content[0].text.strip()
-
-    # Strip markdown code fences if Claude wraps the JSON
+    # Strip markdown code fences if Gemini wraps the JSON
     if raw_text.startswith("```"):
         parts = raw_text.split("```")
         raw_text = parts[1]
@@ -140,9 +123,9 @@ def convert_to_latlon(data: dict) -> dict:
 
 
 def main():
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
-        print("Error: ANTHROPIC_API_KEY environment variable is not set.")
+        print("Error: GOOGLE_API_KEY environment variable is not set.")
         print("See README.md for instructions on how to set it up.")
         sys.exit(1)
 
@@ -151,7 +134,8 @@ def main():
         print("Make sure you run this script from the project root directory.")
         sys.exit(1)
 
-    client = anthropic.Anthropic(api_key=api_key)
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     doc_folders = sorted([f for f in DOCS_FOLDER.iterdir() if f.is_dir()])
     print(f"Honduras Mines Coordinate Extractor")
@@ -163,7 +147,7 @@ def main():
     for folder in doc_folders:
         print(f"[{folder.name}]")
         try:
-            data = extract_from_folder(client, folder)
+            data = extract_from_folder(model, folder)
             if data is None:
                 continue
             data["document_name"] = folder.name

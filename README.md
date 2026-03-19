@@ -8,7 +8,7 @@ Interactive visualization of mine locations in Honduras extracted from scanned d
 
 Two scripts:
 
-1. **`extract_coordinates.py`** — reads the scanned document images, uses Claude AI (vision) to extract coordinates and metadata, and saves everything to `mines_data.json`.
+1. **`extract_coordinates.py`** — reads the scanned document images, uses Google Gemini AI (free tier) to extract coordinates and metadata, and saves everything to `mines_data.json`.
 2. **`generate_map.py`** — reads `mines_data.json` and produces a standalone `mines_map.html` that anyone can open in a browser.
 
 Only the person running the extraction needs Python and an API key. The final `mines_map.html` file can be shared with and opened by anyone.
@@ -28,32 +28,32 @@ During installation on Windows, check **"Add Python to PATH"**.
 Open a terminal (Command Prompt or PowerShell on Windows, Terminal on Mac/Linux) and run:
 
 ```
-pip install anthropic folium pyproj
+pip install google-generativeai Pillow folium pyproj
 ```
 
-### 3. Get an Anthropic API key
+### 3. Get a free Google Gemini API key
 
-The extraction script uses Claude's vision AI, which requires a free API key.
+No credit card required — just a Google account.
 
-1. Go to https://console.anthropic.com and sign up or log in.
-2. Click **API Keys** in the left sidebar.
-3. Click **Create Key**, give it a name (e.g. "Honduras Mines"), and copy the key.
+1. Go to https://aistudio.google.com/apikey and sign in with your Google account.
+2. Click **Create API key**.
+3. Copy the key.
 
 ### 4. Set the API key as an environment variable
 
 **Windows (Command Prompt):**
 ```
-set ANTHROPIC_API_KEY=your-key-here
+set GOOGLE_API_KEY=your-key-here
 ```
 
 **Windows (PowerShell):**
 ```
-$env:ANTHROPIC_API_KEY="your-key-here"
+$env:GOOGLE_API_KEY="your-key-here"
 ```
 
 **Mac / Linux:**
 ```
-export ANTHROPIC_API_KEY="your-key-here"
+export GOOGLE_API_KEY="your-key-here"
 ```
 
 > Note: this only lasts for the current terminal session. To make it permanent, add it to your system environment variables (Windows) or your shell profile file like `~/.zshrc` or `~/.bashrc` (Mac/Linux).
@@ -70,7 +70,7 @@ Open a terminal in the project folder (the folder containing this README), then:
 python extract_coordinates.py
 ```
 
-This reads all images from `HONDURAS MINING COORDINATES/`, sends them to Claude, and saves the results to `mines_data.json`. It prints progress for each document.
+This reads all images from `HONDURAS MINING COORDINATES/`, sends them to Gemini, and saves the results to `mines_data.json`. It prints progress for each document.
 
 ### Step 2 — Generate the map
 
@@ -122,8 +122,8 @@ Honduras-Mines-HR-Project/
 
 | Problem | Fix |
 |---|---|
-| `ModuleNotFoundError` | Run `pip install anthropic folium pyproj` |
-| `ANTHROPIC_API_KEY not set` | Follow step 4 above |
+| `ModuleNotFoundError` | Run `pip install google-generativeai Pillow folium pyproj` |
+| `GOOGLE_API_KEY not set` | Follow step 4 above |
 | `Folder not found` | Run the scripts from the project root directory |
 | A document shows 0 points | Check the terminal output — the note field may explain why |
-| Points appear in the ocean | Claude may have misread a digit; open `mines_data.json` and check the raw values |
+| Points appear in the ocean | Gemini may have misread a digit; open `mines_data.json` and check the raw values |
